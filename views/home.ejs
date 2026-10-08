@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Library Management System</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: #20251f;
+        background: #f4f5ef;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; }
+      header { padding: 2.5rem max(1.25rem, calc((100vw - 1080px) / 2)); background: #244c3d; color: #fff; }
+      header p { margin: .5rem 0 0; color: #d8e5dc; }
+      main { width: min(1080px, calc(100% - 2.5rem)); margin: 2rem auto; }
+      .panel { margin-bottom: 1.5rem; padding: 1.5rem; border: 1px solid #e0e4da; border-radius: 14px; background: #fff; box-shadow: 0 4px 16px #18251b0a; }
+      h1, h2 { margin-top: 0; }
+      h1 { margin-bottom: 0; font-size: clamp(1.8rem, 4vw, 2.5rem); }
+      h2 { margin-bottom: 1rem; font-size: 1.2rem; }
+      .table-wrap { overflow-x: auto; }
+      table { width: 100%; border-collapse: collapse; text-align: left; }
+      th, td { padding: .85rem .7rem; border-bottom: 1px solid #e8ebe5; vertical-align: middle; }
+      th { color: #536057; font-size: .78rem; letter-spacing: .04em; text-transform: uppercase; }
+      td { font-size: .92rem; }
+      .status { display: inline-block; padding: .25rem .6rem; border-radius: 999px; background: #e7f4e9; color: #28633b; font-size: .8rem; font-weight: 650; }
+      .status.issued { background: #fff0d9; color: #87520c; }
+      .actions { display: flex; gap: .4rem; }
+      button { border: 0; border-radius: 7px; padding: .5rem .7rem; background: #e8eee9; color: #244c3d; font: inherit; font-size: .82rem; font-weight: 650; cursor: pointer; }
+      button:hover { background: #dce8df; }
+      button.delete { background: #fbebea; color: #9b352e; }
+      button.delete:hover { background: #f6ddda; }
+      .form-grid { display: grid; grid-template-columns: 2fr 2fr 1fr 1fr auto; gap: .75rem; align-items: end; }
+      label { display: grid; gap: .4rem; color: #536057; font-size: .82rem; font-weight: 650; }
+      input { width: 100%; border: 1px solid #d9dfd8; border-radius: 7px; padding: .7rem; color: inherit; font: inherit; }
+      input:focus { outline: 2px solid #8bb59a; outline-offset: 1px; }
+      button.primary { padding: .72rem 1rem; background: #244c3d; color: #fff; }
+      button.primary:hover { background: #193a2e; }
+      .empty { padding: 1.5rem; color: #68736a; text-align: center; }
+      @media (max-width: 760px) {
+        .form-grid { grid-template-columns: 1fr 1fr; }
+        .form-grid button { grid-column: 1 / -1; }
+      }
+      @media (max-width: 540px) {
+        main { width: min(100% - 1.25rem, 1080px); margin: 1rem auto; }
+        .panel { padding: 1rem; }
+        .form-grid { grid-template-columns: 1fr; }
+        .form-grid button { grid-column: auto; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Library Management System</h1>
+      <p>Keep track of your collection and lending at a glance.</p>
+    </header>
+    <main>
+      <section class="panel" aria-labelledby="books-heading">
+        <h2 id="books-heading">All books <span>(<%= books.length %>)</span></h2>
+        <% if (books.length) { %>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">Title</th>
+                  <th scope="col">Author</th>
+                  <th scope="col">Pages</th>
+                  <th scope="col">Price</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% books.forEach((book) => { %>
+                  <tr>
+                    <td><strong><%= book.bookName %></strong></td>
+                    <td><%= book.bookAuthor %></td>
+                    <td><%= book.bookPages %></td>
+                    <td><%= book.bookPrice.toFixed(2) %></td>
+                    <td><span class="status <%= book.bookState === 'Issued' ? 'issued' : '' %>"><%= book.bookState %></span></td>
+                    <td>
+                      <div class="actions">
+                        <% if (book.bookState === "Available") { %>
+                          <form action="/books/<%= book.id %>/issue" method="post">
+                            <button type="submit" aria-label="Issue <%= book.bookName %>">Issue</button>
+                          </form>
+                        <% } else { %>
+                          <form action="/books/<%= book.id %>/return" method="post">
+                            <button type="submit" aria-label="Return <%= book.bookName %>">Return</button>
+                          </form>
+                        <% } %>
+                        <form action="/books/<%= book.id %>/delete" method="post">
+                          <button class="delete" type="submit" aria-label="Delete <%= book.bookName %>">Delete</button>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        <% } else { %>
+          <p class="empty">No books in the library yet. Add one below.</p>
+        <% } %>
+      </section>
+
+      <section class="panel" aria-labelledby="add-book-heading">
+        <h2 id="add-book-heading">Add a book</h2>
+        <form class="form-grid" action="/books" method="post">
+          <label>
+            Book title
+            <input name="bookName" type="text" maxlength="200" placeholder="e.g. The Great Gatsby" required>
+          </label>
+          <label>
+            Author
+            <input name="bookAuthor" type="text" maxlength="200" placeholder="e.g. F. Scott Fitzgerald" required>
+          </label>
+          <label>
+            Pages
+            <input name="bookPages" type="number" min="1" step="1" placeholder="180" required>
+          </label>
+          <label>
+            Price
+            <input name="bookPrice" type="number" min="0" step="0.01" placeholder="12.99" required>
+          </label>
+          <button class="primary" type="submit">Add book</button>
+        </form>
+      </section>
+    </main>
+  </body>
+</html>
